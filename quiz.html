@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <!--
+        QUIZ GAME!
+
+        REGOLE:
+        / Il giocatore deve indovinare il maggior numero di risposte possibile
+        / Ogni risposta corretta vale 1 punto
+        / Le domande possono essere a risposta multipla oppure vero/falso
+        / Alla fine della partita il giocatore deve sapere il proprio risultato
+
+        DOMANDE:
+        / Puoi prenderle da questo URL (http://bit.ly/strive_QUIZZ) oppure puoi creare le tue
+        / Possono essere a risposta multipla oppure vero/falso
+
+        SUGGERIMENTI PER L'ESERCIZIO:
+        / Memorizza il punteggio totale dell'utente in una variabile
+        / Memorizza in una variabile questionNumber a quale domanda il giocatore sta rispondendo
+        / Quando questionNumber diventa maggiore del numero totale delle domande, la partita è finita e devi mostrare il punteggio
+        / Memorizza le domande in una variabile (oppure recuperale direttamente dall'URL usando AJAX, se già sai come farlo!)
+        / Comincia con i requisiti base, se ti avanza tempo prosegui con gli EXTRA
+        / Verifica tramite la console che il flow dell'applicazione sia corretto, in modo che non ci siano problemi nell'esecuzione
+
+        EXTRA:
+        / Mostra immediatamente al giocatore una volta selezionata la risposta se ha fatto punto oppure no
+        / Presenta le domande al giocatore una alla volta, invece di mostrargliele tutte insieme
+        / Permetti al giocatore di selezionare il livello di difficoltà e il numero delle risposte (puoi recuperarle da qui https://opentdb.com/api.php?amount=10&category=18&difficulty=easy modificando nell'URL i parametri "amount")
+          e "difficulty"
+    --><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
+  </head>
+  <body cz-shortcut-listen="true">
+    <h1>Quiz</h1>
+    <div id="game-container">
+    </div>
+    <script>
+      const questions = []
+      let score = 0;
+      let questionNumber = 0;
+      let currentRightAnswer;
+
+      const closeQuiz = function(){
+        const gameDiv = document.getElementById("game");
+        gameDiv.style.display = "none";
+        let h3 = document.createElement("h3");
+        h3.innerText = 'Quiz is finished, thanks for playing! Your score is: '+score;
+        let body = document.getElementsByTagName("body")[0];
+        body.appendChild(h3)
+
+      }
+
+      const checkAnswer = function(answerIndex) {
+        if (answerIndex === currentRightAnswer) {
+          score++
+          setCurrentScore();
+        }
+      }
+
+      const radioButtonEvent = function(event) {
+        checkAnswer(parseInt(event.target.value));
+        questionNumber++;
+        if (questionNumber < questions.length) {
+          createQuestion(questionNumber);
+        } else {
+          closeQuiz();
+        }
+      }
+
+      const setCurrentScore = function() {
+        let scoreP = document.getElementById("current-score");
+        scoreP.innerText = "Your current score is: " + score
+      }
+      
+      const createRadioButtons = function(answers) {
+        let answerDiv = document.getElementById("answer-options");
+        answerDiv.innerHTML = '';
+        for (let i = 0; i < answers.length; i++) {
+          let radioButton = document.createElement("input")
+          let id = "option"+i
+          let label = document.createElement("label")
+          radioButton.setAttribute("id", id);
+          radioButton.setAttribute("type", "radio");
+          radioButton.setAttribute("name", "answer");
+          radioButton.setAttribute("value", i);
+          radioButton.addEventListener("change", radioButtonEvent)
+          label.setAttribute("for", id);
+          label.innerText= answers[i]
+          answerDiv.appendChild(radioButton);
+          answerDiv.appendChild(label);
+        }
+      }
+
+      const setQuestionTitle = function(question) {
+        let questEl = document.getElementById("question");
+        questEl.innerText = question;
+      }
+
+      const createQuestion = function (questionIndex) {
+        let questObj = questions[questionIndex];
+        let answers = [];
+        currentRightAnswer = Math.floor(Math.random()* questObj.incorrect_answers.length + 1);
+        answers = answers.concat(questObj.incorrect_answers);
+        answers.splice(currentRightAnswer, 0 , questObj.correct_answer);
+        setQuestionTitle(questObj.question);
+        createRadioButtons(answers)
+      }
+
+      const fetchQuestions = function(numberOfQuestions, difficulty){
+        let url = "https://opentdb.com/api.php?category=18&amount="+numberOfQuestions;
+        url = difficulty === "any" ? url : url + "&difficulty=" + difficulty
+        fetch(url)
+        .then(response => response.json())
+        .then(response => questions = response.results);
+      }
+
+      const configureGame = function(){
+        let numberOfQuestions = parseInt(document.getElementById("question-number").value);
+        let difficulty = document.getElementById("difficulty").value;
+        fetchQuestions(numberOfQuestions, difficulty)
+        let gameContainer = document.getElementById("game-container");
+        gameContainer.innerHTML = ''
+      }
+      const startGame = function(){
+        let gameContainer = document.getElementById("game-container");
+        gameContainer.innerHTML = ''
+        let gameDiv = document.createElement("div");
+        gameDiv.setAttribute("id", "game-div");
+        let numberOfQuestionsInput = document.createElement("input");
+        let labelNumberOfQuestions = document.createElement("label");
+        labelNumberOfQuestions.innerText = "Insert the number of questions";
+        labelNumberOfQuestions.setAttribute("for", "question-number");
+        numberOfQuestionsInput.setAttribute("type", "number");
+        numberOfQuestionsInput.setAttribute("value", 10);
+        numberOfQuestionsInput.setAttribute("id", "question-number");
+        gameDiv.appendChild(labelNumberOfQuestions);
+        gameDiv.appendChild(numberOfQuestionsInput);
+        gameDiv.appendChild(document.createElement("br"));
+        gameDiv.appendChild(document.createElement("br"));
+        let labelChooseDifficulty = document.createElement("label");
+        labelChooseDifficulty.innerText = "Choose the difficulty";
+        labelChooseDifficulty.setAttribute("for", "difficulty");
+        let difficultyOptions = ["any", "easy", "medium", "hard"];
+        let selectDifficulty = document.createElement("select");
+        selectDifficulty.setAttribute("value", difficultyOptions[0]);
+        selectDifficulty.setAttribute("id", "difficulty");
+        for (let option of difficultyOptions){
+          let optionEl = document.createElement("option");
+          optionEl.setAttribute("value", option);
+          optionEl.innerText= option.replace(option[0], option[0].toUpperCase());
+          selectDifficulty.appendChild(optionEl);
+        }
+        
+        gameDiv.appendChild(labelChooseDifficulty)
+        gameDiv.appendChild(selectDifficulty)
+        gameContainer.appendChild(gameDiv);
+        gameDiv.appendChild(document.createElement("br"));
+        gameDiv.appendChild(document.createElement("br"));
+        let continueButton = document.createElement("button");
+        continueButton.addEventListener("click", configureGame);
+        continueButton.innerText= "Next"
+        gameDiv.appendChild(continueButton);
+      }
+      window.onload = function () {
+        startGame()
+        //createQuestion(0)
+        //setCurrentScore()
+        // ANCORA SUGGERIMENTI :)
+        // Se stai mostrando al giocatore tutte le domande in un colpo solo:
+        // Per ogni domanda, crea un elemento contenitore; poi crea un radio button (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio)
+        // con, come opzioni, sia la risposta corretta che quella/e non corretta/e. (puoi utilizzare google per capire come recuperare il valore di un
+        // radio button per il punteggio finale)
+        //
+        // Se stai mostrando al giocatore le domande una alla volta:
+        // All'inizio mostra la prima domanda con il testo i i radio buttons. Quando il giocatore seleziona una risposta, prendi la domanda
+        // successiva dall'elenco e rimpiazza la domanda vecchia, salvando la risposta selezionata in una variabile.
+      }
+
+      // Come calcolare il punteggio? Puoi farlo in 2 modi:
+      // Se stai mostrando al giocatore tutte le domande in un colpo solo, seleziona tutti i radio buttons e controlla se la risposta selezionata
+      // è quella corretta.
+      // Se stai mostrando al giocatore le domande una alla volta, basta aggiungere o no 1 punto ogni volta che viene selezionata una risposta.
+    </script>
+  </body>
+</html>

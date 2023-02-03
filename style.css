@@ -1,0 +1,42 @@
+body {
+    width: 80vw;
+    margin: 0 auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+a:link {
+    color: aqua;
+}
+
+.myBorder {
+    border: red solid 1px;
+}
+
+table {
+    border-radius: 5px;
+}
+
+p {
+    margin: 20px;
+}
+
+.myFont {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.hiddenElement {
+    visibility: hidden;
+}
+
+
+td {
+    border: solid green 1px;
+}
+
+tr {
+    outline: red dotted 1px;
+}
