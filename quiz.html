@@ -34,21 +34,31 @@
     <div id="game-container">
     </div>
     <script>
-      const questions = []
-      let score = 0;
-      let questionNumber = 0;
+      //Questions are downloaded when the game starts. 
+      let questions = []
+      let score;
+      let questionNumber;
       let currentRightAnswer;
-
+      // questa funzione "distrugge il fieldset" e mostra un messaggio di gioco concluso e il punteggio finale
+      //è presente un button che permette di ricominciare il gioco dall'inizio
       const closeQuiz = function(){
-        const gameDiv = document.getElementById("game");
-        gameDiv.style.display = "none";
+        const gameDiv = document.getElementById("game-container");
+        gameDiv.innerHTML = '';
         let h3 = document.createElement("h3");
         h3.innerText = 'Quiz is finished, thanks for playing! Your score is: '+score;
-        let body = document.getElementsByTagName("body")[0];
-        body.appendChild(h3)
+        let button = document.createElement("button");
+        button.innerText = "Repeat quiz";
+        button.addEventListener("click", startGame);
+        gameDiv.appendChild(h3);
+        gameDiv.appendChild(button);
 
       }
-
+      //questa funzione aggiorna il punteggio corrente riporato nel fieldset quando il punteggio cambia
+      const setCurrentScore = function() {
+        let scoreP = document.getElementById("current-score");
+        scoreP.innerText = "Your current score is: " + score
+      }
+      //la funzione che riceve il valore del radio button premuto controlla se lo stesso corrisponde con la variabile currentRightanswer e in tal caso aggiorna la variabile score e rilancia la funzione che mostra lo score nel fieldset
       const checkAnswer = function(answerIndex) {
         if (answerIndex === currentRightAnswer) {
           score++
@@ -56,6 +66,8 @@
         }
       }
 
+      //Se il radio button viene premuto viene lanciata la funzione per controllare se la scelta è corretta o meno (in tal caso il punteggio è subito aggiornato)
+      //In seguito viene incrementato il questionNumber e, se lo è stesso è superiore al numero di domande il gioco viene concluso, altrimenti imposta la domanda successiva
       const radioButtonEvent = function(event) {
         checkAnswer(parseInt(event.target.value));
         questionNumber++;
@@ -66,11 +78,8 @@
         }
       }
 
-      const setCurrentScore = function() {
-        let scoreP = document.getElementById("current-score");
-        scoreP.innerText = "Your current score is: " + score
-      }
-      
+      //la funzione crea un radio button per ciascun elemento presente nell'array passato come parametro.
+      //A ciascun radio button viene associato un event listner che controlla se il pulsante viene premuto
       const createRadioButtons = function(answers) {
         let answerDiv = document.getElementById("answer-options");
         answerDiv.innerHTML = '';
@@ -89,12 +98,14 @@
           answerDiv.appendChild(label);
         }
       }
-
+      //la funzione accetta la domanda come argomento e setta la legend nel fieldset uguale alla domanda
       const setQuestionTitle = function(question) {
         let questEl = document.getElementById("question");
         questEl.innerText = question;
       }
-
+      //La funzione che accetta l'indice della domanda come parametro genera un array di risposte che include le risposte sbagliate e quella esatta inserita in un indice casuale
+      //La funzione assegna anche la risposta corretta alla variabile currentRightAnswer
+      //In seguito la funzione richiama la funzione per settare la domanda corrente nel fieldset e creare i radio button nelle risposte
       const createQuestion = function (questionIndex) {
         let questObj = questions[questionIndex];
         let answers = [];
@@ -104,23 +115,48 @@
         setQuestionTitle(questObj.question);
         createRadioButtons(answers)
       }
-
+      //La funzione genera il fieldset e crea i nodi children legend per la domanda e un div per contenere le risposte radio button 
+      const createGameField = function() {
+        let gameContainer = document.getElementById("game-container");
+        gameContainer.innerHTML = '';
+        let fieldset = document.createElement("fieldset");
+        let legend = document.createElement("legend");
+        legend.setAttribute("id", "question")
+        let answersDiv = document.createElement("div");
+        answersDiv.setAttribute("id", "answer-options")
+        fieldset.appendChild(legend);
+        fieldset.appendChild(answersDiv);
+        let scoreP = document.createElement("p");
+        scoreP.setAttribute("id", "current-score")
+        gameContainer.appendChild(fieldset);  
+        gameContainer.appendChild(scoreP);
+      }
+      //la funzione genera l'url sulla base delle scelte dell'utente (la difficoltà è aggiunta solo in caso l'utente scelga qualcosa di diverso da "any")
+      //Acquisite le domande il programma viene richiamata la funzione per generare il fieldset, viene impostato il punteggio uguale a 0 impostata la prima domanda
       const fetchQuestions = function(numberOfQuestions, difficulty){
         let url = "https://opentdb.com/api.php?category=18&amount="+numberOfQuestions;
-        url = difficulty === "any" ? url : url + "&difficulty=" + difficulty
+        url = difficulty === "any" ? url : url + "&difficulty=" + difficulty;
         fetch(url)
         .then(response => response.json())
-        .then(response => questions = response.results);
+        .then(response => {
+          questions = response.results;
+          createGameField();
+          setCurrentScore();
+          createQuestion(0);
+        });
       }
-
+      //Quando il bottone viene premuto la funzione prende il numero di domande e la difficoltà scelte e lancia la funzione per acquisire le domande
       const configureGame = function(){
         let numberOfQuestions = parseInt(document.getElementById("question-number").value);
         let difficulty = document.getElementById("difficulty").value;
+        let loadingP = document.getElementById("loading");
+        loadingP.innerText = "loading..."
         fetchQuestions(numberOfQuestions, difficulty)
-        let gameContainer = document.getElementById("game-container");
-        gameContainer.innerHTML = ''
       }
+      // La funzione crea un input di tipo number, un select per scegliere il numero di domande e la difficultà e un button per confermare la scelta
       const startGame = function(){
+        score = 0;
+        questionNumber = 0;
         let gameContainer = document.getElementById("game-container");
         gameContainer.innerHTML = ''
         let gameDiv = document.createElement("div");
@@ -158,12 +194,14 @@
         let continueButton = document.createElement("button");
         continueButton.addEventListener("click", configureGame);
         continueButton.innerText= "Next"
+        let loadingP = document.createElement("p")
+        loadingP.setAttribute("id", "loading")
         gameDiv.appendChild(continueButton);
+        gameDiv.appendChild(loadingP);
       }
       window.onload = function () {
+        //Quando la pagina è caricata inizia il gioco
         startGame()
-        //createQuestion(0)
-        //setCurrentScore()
         // ANCORA SUGGERIMENTI :)
         // Se stai mostrando al giocatore tutte le domande in un colpo solo:
         // Per ogni domanda, crea un elemento contenitore; poi crea un radio button (https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio)
