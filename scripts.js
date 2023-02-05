@@ -283,7 +283,7 @@ const createTable = function(){
 }
 createTable();
 
-//Esercizio 49
+//Esercizio 50
 const deleteLastTable = function(){
     let elTables = document.getElementsByTagName("table");
     elTables[elTables.length - 1].remove();
