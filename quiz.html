@@ -27,12 +27,16 @@
         / Permetti al giocatore di selezionare il livello di difficoltà e il numero delle risposte (puoi recuperarle da qui https://opentdb.com/api.php?amount=10&category=18&difficulty=easy modificando nell'URL i parametri "amount")
           e "difficulty"
     --><head>
-    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   </head>
   <body cz-shortcut-listen="true">
-    <h1>Quiz</h1>
-    <div id="game-container">
-    </div>
+    <header>
+      <h1>Quiz</h1>
+    </header>
+    <main>
+      <div id="game-container">
+      </div>
+    </main>
     <script>
       //Questions are downloaded when the game starts. 
       let questions = []
@@ -153,6 +157,7 @@
         loadingP.innerText = "loading..."
         fetchQuestions(numberOfQuestions, difficulty)
       }
+      
       // La funzione crea un input di tipo number, un select per scegliere il numero di domande e la difficultà e un button per confermare la scelta
       const startGame = function(){
         score = 0;
